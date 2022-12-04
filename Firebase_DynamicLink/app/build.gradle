@@ -1,10 +1,11 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
 }
 
 android {
-    namespace 'com.psw9999.firebase_dynamiclink'
+        namespace 'com.psw9999.firebase_dynamiclink'
     compileSdk 32
 
     defaultConfig {
@@ -15,6 +16,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        dataBinding = true
     }
 
     buildTypes {
@@ -33,6 +38,13 @@ android {
 }
 
 dependencies {
+
+    implementation platform('com.google.firebase:firebase-bom:31.1.0')
+    // Dependency for Firebase Dynamic Links
+    implementation 'com.google.firebase:firebase-dynamic-links-ktx:21.1.0'
+
+    // Official Firebase documentation suggests adding this dependency as well.
+    implementation 'com.google.firebase:firebase-analytics-ktx:21.2.0'
 
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
