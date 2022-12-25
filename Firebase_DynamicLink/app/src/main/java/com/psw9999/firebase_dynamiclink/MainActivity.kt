@@ -5,11 +5,17 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.firebase.FirebaseApp
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.dynamiclinks.ktx.androidParameters
 import com.psw9999.firebase_dynamiclink.databinding.ActivityMainBinding
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,20 +24,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        FirebaseApp.initializeApp(applicationContext)
         initButton()
         initDynamicLink()
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        observeData()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        println("onPause")
     }
 
     fun generateSharingLink(
         deepLink: Uri,
         getShareableLink: (String) -> Unit = {},
     ) {
-        val dynamicLink = FirebaseDynamicLinks.getInstance().createDynamicLink().run {
+        FirebaseDynamicLinks.getInstance().createDynamicLink().run {
             // What is this link parameter? You will get to know when we will actually use this function.
             link = deepLink
 
@@ -58,11 +75,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initButton() {
         binding.testButton.setOnClickListener {
-            generateSharingLink(
-                deepLink = "${PREFIX}/stockInfo/${50}".toUri(),
-            ) { generateLink ->
-                shareInformation(generateLink)
-            }
+            viewModel.onBtnClick()
         }
     }
 
@@ -89,5 +102,19 @@ class MainActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
             }
+    }
+
+    private fun observeData() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.shareEvent.collectLatest {
+                    generateSharingLink(
+                        deepLink = "${PREFIX}/stockInfo/${50}".toUri(),
+                    ) { generateLink ->
+                        shareInformation(generateLink)
+                    }
+                }
+            }
+        }
     }
 }
