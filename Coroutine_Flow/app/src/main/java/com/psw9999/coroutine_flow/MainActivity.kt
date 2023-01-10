@@ -5,48 +5,39 @@ import android.os.Bundle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import com.psw9999.coroutine_flow.databinding.ActivityMainBinding
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    private val testFlow = MutableStateFlow<Boolean>(false)
+
+    private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+    private val stateFlow = MutableStateFlow(false)
+    val job = launchNewJob()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        CoroutineScope(Dispatchers.IO).launch {
-            collectData()
-        }
-        observeData()
-        setContentView(R.layout.activity_main)
-    }
+        setContentView(binding.root)
 
-    private fun observeData() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                testFlow.collectLatest {
-                    println("testFlow : $testFlow")
-                }
+        binding.testButton.setOnClickListener {
+            if (!job.isActive) {
+                println("Job Start")
+                job.start()
             }
+            else println("이미 실행중입니다.")
         }
     }
 
-    private suspend fun collectData() {
-        try {
-            occurError().collect {
-                testFlow.emit(it)
-            }
-        } catch (e: Exception) {
-            println("error")
-        }
+    fun launchNewJob() = CoroutineScope(Dispatchers.Default).launch(start = CoroutineStart.LAZY) {
+        delay(1000)
+        println("job End")
     }
 
-    // 첫번째 에러 발생
-    private suspend fun occurError(): Flow<Boolean> =
+    private val testFlow =
         flow {
-            throw Exception()
+            println("job Start")
+            delay(1000)
             emit(true)
         }
+
 }
