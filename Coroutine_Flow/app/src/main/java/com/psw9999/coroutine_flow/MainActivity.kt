@@ -12,32 +12,33 @@ import kotlinx.coroutines.flow.*
 class MainActivity : AppCompatActivity() {
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-    private val stateFlow = MutableStateFlow(false)
-    val job = launchNewJob()
+    var job: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
         binding.testButton.setOnClickListener {
-            if (!job.isActive) {
-                println("Job Start")
-                job.start()
+            println("Click")
+            if (job == null) {
+                job = CoroutineScope(Dispatchers.Default).launch {
+                    println("Job Start!")
+                    testFlow.collect{
+                        println("testFlow")
+                    }
+                    delay(2000)
+                    println("Job End!")
+                    job = null
+                }
             }
-            else println("이미 실행중입니다.")
         }
     }
 
-    fun launchNewJob() = CoroutineScope(Dispatchers.Default).launch(start = CoroutineStart.LAZY) {
-        delay(1000)
-        println("job End")
+    private val testFlow = flow {
+        throw(Exception())
+        emit(true)
+    }.catch {
+        println("Error Occur!")
     }
-
-    private val testFlow =
-        flow {
-            println("job Start")
-            delay(1000)
-            emit(true)
-        }
 
 }
